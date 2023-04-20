@@ -1,0 +1,19 @@
+
+# Virtual environment
+venv/
+
+01-download_from_bilibili/
+02-download_PyQt-Fluent-Widgets/
+04-openai/
+opencv/
+Video_Codec_SDK_11.1.5/
+VideoProcessingFramework/
+
+
+# Jupyter Notebook files
+.ipynb_checkpoints/
+# Log files
+*.log
+# OS generated files
+.DS_Store
+Thumbs.db
