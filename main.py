@@ -51,7 +51,7 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings):
 
         self.horizontalSlider_videoProgress.setMinimum(0)
         self.horizontalSlider_videoProgress.setMaximum(100)
-        self.horizontalSlider_videoProgress.setSingleStep(0.1)  # 添加这一行，将步长设为1
+        self.horizontalSlider_videoProgress.setSingleStep(1)  # 添加这一行，将步长设为1
         self.horizontalSlider_videoProgress.setTracking(True)  # 将setTracking设置为True，使得拖动更加顺滑
         self.horizontalSlider_videoProgress.valueChanged.connect(self.on_slider_value_changed)
         self.lineEdit_currentTime.textChanged.connect(self.on_current_time_changed)
