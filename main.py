@@ -39,6 +39,7 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings):
         self.timer.start(self.waitkey // 30)  # 设置刷新率，例如 30 FPS
 
         self.detect_on = False  # 添加这个布尔变量
+        self.ADB_show_on = False
 
         self.radioButton_camera.clicked.connect(self.settings.selected_video_source)
         self.radioButton_local.clicked.connect(self.settings.selected_video_source)
@@ -57,6 +58,7 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings):
 
         self.pushButton_startend_detect.clicked.connect(self.on_button_click)
         self.pushButton_closedprocess.clicked.connect(self.stop_and_close)
+        self.pushButton_start_ADBshow.clicked.connect(self.toggle_ADBshow)
 
     def set_scale_ratio(self, scale_ratio):
         self.scale_ratio = scale_ratio
@@ -112,14 +114,16 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings):
                 return
 
             height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            frame = preprocess_frame(frame, height, self.settings)
-            frame = self.executor.submit(process_frame, frame, self.model).result()  # 使用线程池处理帧
+            preprocessed_frame = preprocess_frame(frame, height, self.settings)
+            detection_frame = preprocessed_frame.copy()
 
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            h, w, ch = frame.shape
+            detection_frame = self.executor.submit(process_frame, detection_frame, self.model).result()  # 使用线程池处理帧
+            detection_frame = cv2.cvtColor(detection_frame, cv2.COLOR_BGR2RGB)
+
+            h, w, ch = detection_frame.shape
             bytes_per_line = ch * w
 
-            image = QImage(frame.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
+            image = QImage(detection_frame.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
             pixmap = QPixmap.fromImage(image)
 
             # 设置 QPixmap 到 QLabel
@@ -133,6 +137,19 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings):
                 total_frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
                 slider_value = int(current_frame / total_frames * 100)
                 self.horizontalSlider_videoProgress.setValue(slider_value)
+
+        if self.ADB_show_on:  # 仅当 self.ADB_show_on 为 True 时显示原始视频
+            # 显示预处理后的帧（不带检测框）到 ADB 交互显示区
+            preprocessed_frame = cv2.cvtColor(preprocessed_frame, cv2.COLOR_BGR2RGB)
+            h_raw, w_raw, ch_raw = preprocessed_frame.shape
+            bytes_per_line_raw = ch_raw * w_raw
+
+            image_raw = QImage(preprocessed_frame.data, w_raw, h_raw, bytes_per_line_raw,
+                               QImage.Format.Format_RGB888)
+            pixmap_raw = QPixmap.fromImage(image_raw)
+
+            self.label_ADBexchange.setPixmap(pixmap_raw)
+            self.label_ADBexchange.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
     def contextMenuEvent(self, event):
         context_menu = QMenu(self)
@@ -169,12 +186,17 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings):
             #     self.cap.release()  # 释放资源
             #     self.cap = None
 
+    def toggle_ADBshow(self):
+        self.ADB_show_on = not self.ADB_show_on
+
     def stop_and_close(self):
         self.detect_on = False  # 停止视觉检测
+        self.ADB_show_on = False  # 停止显示原始视频
         if self.cap:
             self.cap.release()  # 释放资源
             self.cap = None
         self.label_showvideo.clear()  # 清除label_showvideo控件上的视频显示
+        self.label_ADBexchange.clear()  # 清除label_ADBexchange控件上的视频显示
 
 
 if __name__ == "__main__":

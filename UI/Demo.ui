@@ -120,6 +120,60 @@ background-repeat: no-repeat;
       </item>
       <item row="0" column="1">
        <layout class="QGridLayout" name="gridLayout_3">
+        <item row="1" column="0">
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <item>
+           <widget class="QPushButton" name="pushButton_startend_detect">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>启动视觉识别</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_closedprocess">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>结束程序</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
         <item row="0" column="0">
          <widget class="QTabWidget" name="tabWidget">
           <property name="minimumSize">
@@ -135,7 +189,7 @@ background-repeat: no-repeat;
            </size>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="widget">
            <attribute name="title">
@@ -324,7 +378,7 @@ background-repeat: no-repeat;
                </rect>
               </property>
               <property name="decimals">
-               <number>1</number>
+               <number>2</number>
               </property>
               <property name="maximum">
                <double>1.000000000000000</double>
@@ -655,17 +709,17 @@ background-repeat: no-repeat;
            <attribute name="title">
             <string>CAN通信模块</string>
            </attribute>
-           <widget class="QPushButton" name="pushButton">
+           <widget class="QPushButton" name="pushButton_Connect_Disconnect_CAN">
             <property name="geometry">
              <rect>
               <x>10</x>
-              <y>230</y>
+              <y>240</y>
               <width>271</width>
-              <height>51</height>
+              <height>35</height>
              </rect>
             </property>
             <property name="text">
-             <string>连接/断开CAN设备</string>
+             <string>建立/断开 CAN通信</string>
             </property>
            </widget>
            <widget class="QGroupBox" name="groupBox_4">
@@ -686,7 +740,7 @@ background-repeat: no-repeat;
                <x>0</x>
                <y>20</y>
                <width>271</width>
-               <height>31</height>
+               <height>30</height>
               </rect>
              </property>
              <item>
@@ -696,7 +750,7 @@ background-repeat: no-repeat;
              </item>
              <item>
               <property name="text">
-               <string>实际车灯CAN</string>
+               <string>物理CAN</string>
               </property>
              </item>
             </widget>
@@ -705,23 +759,80 @@ background-repeat: no-repeat;
             <property name="geometry">
              <rect>
               <x>10</x>
-              <y>110</y>
-              <width>281</width>
-              <height>71</height>
+              <y>120</y>
+              <width>131</width>
+              <height>81</height>
              </rect>
             </property>
             <property name="title">
-             <string>CAN设备的地址或端口信息</string>
+             <string>波特率设置</string>
             </property>
-            <widget class="QLineEdit" name="lineEdit_6">
+            <widget class="QComboBox" name="comboBox_baud_rate">
              <property name="geometry">
               <rect>
                <x>10</x>
                <y>30</y>
-               <width>261</width>
-               <height>31</height>
+               <width>101</width>
+               <height>35</height>
               </rect>
              </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>35</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>35</height>
+              </size>
+             </property>
+             <item>
+              <property name="text">
+               <string>10k</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>20k</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>50k</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>100k</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>125k</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>250k</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>500k</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>800k</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>1000k</string>
+              </property>
+             </item>
             </widget>
            </widget>
            <widget class="QGroupBox" name="groupBox_6">
@@ -746,6 +857,58 @@ background-repeat: no-repeat;
               </rect>
              </property>
             </widget>
+           </widget>
+           <widget class="QGroupBox" name="groupBox_8">
+            <property name="geometry">
+             <rect>
+              <x>150</x>
+              <y>120</y>
+              <width>131</width>
+              <height>81</height>
+             </rect>
+            </property>
+            <property name="title">
+             <string>接收设备ID</string>
+            </property>
+            <widget class="QSpinBox" name="spinBox_recivedevice_ID">
+             <property name="geometry">
+              <rect>
+               <x>10</x>
+               <y>30</y>
+               <width>101</width>
+               <height>35</height>
+              </rect>
+             </property>
+             <property name="maximum">
+              <number>10</number>
+             </property>
+            </widget>
+           </widget>
+           <widget class="QPushButton" name="pushButton_start_send_CAN">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>340</y>
+              <width>121</width>
+              <height>41</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>开始 发送</string>
+            </property>
+           </widget>
+           <widget class="QPushButton" name="pushButton_start_receive_CAN">
+            <property name="geometry">
+             <rect>
+              <x>140</x>
+              <y>340</y>
+              <width>131</width>
+              <height>41</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>开始 接收</string>
+            </property>
            </widget>
           </widget>
           <widget class="QWidget" name="widget">
@@ -905,62 +1068,21 @@ background-repeat: no-repeat;
              </property>
             </widget>
            </widget>
+           <widget class="QPushButton" name="pushButton_start_ADBshow">
+            <property name="geometry">
+             <rect>
+              <x>70</x>
+              <y>630</y>
+              <width>181</width>
+              <height>51</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>开始 ADB交互显示</string>
+            </property>
+           </widget>
           </widget>
          </widget>
-        </item>
-        <item row="1" column="0">
-         <layout class="QHBoxLayout" name="horizontalLayout_4">
-          <item>
-           <widget class="QPushButton" name="pushButton_startend_detect">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>30</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>30</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>启动视觉识别</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="pushButton_closedprocess">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>30</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>30</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>结束程序</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
         </item>
        </layout>
       </item>
