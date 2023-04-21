@@ -189,7 +189,7 @@ background-repeat: no-repeat;
            </size>
           </property>
           <property name="currentIndex">
-           <number>2</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="widget">
            <attribute name="title">
@@ -719,7 +719,7 @@ background-repeat: no-repeat;
              </rect>
             </property>
             <property name="text">
-             <string>建立/断开 CAN通信</string>
+             <string>建立CAN通信</string>
             </property>
            </widget>
            <widget class="QGroupBox" name="groupBox_4">
@@ -734,7 +734,7 @@ background-repeat: no-repeat;
             <property name="title">
              <string>CAN通讯类型</string>
             </property>
-            <widget class="QComboBox" name="comboBox">
+            <widget class="QComboBox" name="comboBox_CANtpye">
              <property name="geometry">
               <rect>
                <x>0</x>
@@ -790,47 +790,47 @@ background-repeat: no-repeat;
              </property>
              <item>
               <property name="text">
-               <string>10k</string>
+               <string extracomment="10K">10000</string>
               </property>
              </item>
              <item>
               <property name="text">
-               <string>20k</string>
+               <string>20000</string>
               </property>
              </item>
              <item>
               <property name="text">
-               <string>50k</string>
+               <string>50000</string>
               </property>
              </item>
              <item>
               <property name="text">
-               <string>100k</string>
+               <string>100000</string>
               </property>
              </item>
              <item>
               <property name="text">
-               <string>125k</string>
+               <string>125000</string>
               </property>
              </item>
              <item>
               <property name="text">
-               <string>250k</string>
+               <string>250000</string>
               </property>
              </item>
              <item>
               <property name="text">
-               <string>500k</string>
+               <string>500000</string>
               </property>
              </item>
              <item>
               <property name="text">
-               <string>800k</string>
+               <string>800000</string>
               </property>
              </item>
              <item>
               <property name="text">
-               <string>1000k</string>
+               <string>1000000</string>
               </property>
              </item>
             </widget>
@@ -847,7 +847,7 @@ background-repeat: no-repeat;
             <property name="title">
              <string>日志</string>
             </property>
-            <widget class="QTextEdit" name="textEdit">
+            <widget class="QTextEdit" name="textEdit_CANmessage">
              <property name="geometry">
               <rect>
                <x>10</x>
