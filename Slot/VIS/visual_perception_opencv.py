@@ -2,6 +2,7 @@ import torch
 from yolov5 import YOLOv5
 import os
 import cv2
+import numpy as np
 
 #1. 加载模型
 def load_model(model_path, device):
@@ -97,28 +98,42 @@ def preprocess_frame(frame, height, settings):
 # 5. 运行目标检测
 def process_frame(frame, model):
     """
-    使用YOLOv5模型对输入的视频帧进行目标检测。
+    使用YOLOv5模型对输入的视频帧进行目标检测，并返回物体信息列表。
     :param frame: 输入的视频帧
     :param model: YOLOv5模型实例
-    :return: 绘制边界框后的视频帧
+    :return: 绘制边界框后的视频帧，以及物体信息列表
     """
     results = model.predict(frame)
-    return draw_bboxes(frame, results)
+    detection_frame, object_info_list = draw_bboxes(frame, results)
+    return detection_frame, object_info_list
+
 
 # 6. 后处理
-def draw_bboxes(img, results, conf_threshold=0.5):
+def draw_bboxes(img, results, conf_threshold=0.1):
     """
-    在输入的图像上绘制检测到的边界框。
+    在输入的图像上绘制检测到的边界框，并返回物体信息列表。
     :param img: 输入的图像
     :param results: 检测结果
     :param conf_threshold: 置信度阈值，默认为 0.5
-    :return: 绘制边界框后的图像
+    :return: 绘制边界框后的图像，以及物体信息列表
     """
+    object_info_list = []
     for *box, conf, cls in results.xyxy[0]:
         if conf >= conf_threshold and int(cls) in [0, 1]:  # 只绘制人和车两个类别的检测结果，且置信度大于等于阈值
             label = f"{results.names[int(cls)]} {conf:.2f}"
             x1, y1, x2, y2 = map(int, box)
             img = cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 2)
             img = cv2.putText(img, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
-    return img
+
+            object_info = {
+                'category': int(cls),
+                'x': (x1 + x2) / 2,  # 使用边界框中心点的x坐标
+                'y': (y1 + y2) / 2,  # 使用边界框中心点的y坐标
+                'width': x2 - x1,
+                'height': y2 - y1
+            }
+            object_info_list.append(object_info)
+
+    return img, object_info_list
+
 
