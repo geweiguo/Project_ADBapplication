@@ -734,7 +734,7 @@ background-repeat: no-repeat;
             <property name="title">
              <string>CAN通讯类型</string>
             </property>
-            <widget class="QComboBox" name="comboBox_CANtpye">
+            <widget class="QComboBox" name="comboBox_CANtype">
              <property name="geometry">
               <rect>
                <x>0</x>
@@ -787,6 +787,9 @@ background-repeat: no-repeat;
                <width>16777215</width>
                <height>35</height>
               </size>
+             </property>
+             <property name="currentText">
+              <string>500000</string>
              </property>
              <item>
               <property name="text">
@@ -881,6 +884,9 @@ background-repeat: no-repeat;
              </property>
              <property name="maximum">
               <number>10</number>
+             </property>
+             <property name="value">
+              <number>1</number>
              </property>
             </widget>
            </widget>

@@ -5,20 +5,22 @@ from UI.resourceforQt.background import qInitResources
 from Slot.VIS.settings import Settings
 from Slot.VIS.visual_perception_opencv import process_frame, select_device, preprocess_frame, load_model
 import cv2
-from PyQt6.QtCore import QTimer, Qt
+from PyQt6.QtCore import QTimer, Qt, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox
 from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import QMenu
-
+from Slot.CAN.can_communication import CANCommunication
 
 qInitResources()  # 初始化资源
 
 
-class MainWindow(QMainWindow, Ui_MainWindow, Settings):
-    def __init__(self):
-        super().__init__()
+class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
+    def __init__(self, *args, **kwargs):
+        super(MainWindow, self).__init__(*args, **kwargs)
         self.setupUi(self)
         self.settings = Settings(parent=self)
+        self.can_communication = CANCommunication(parent=self)
+        self.can_communication.set_text_edit_can_message(self.textEdit_CANmessage)
 
         self.device = select_device(0)
         self.model_path = None
@@ -34,6 +36,8 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings):
         self.waitkey = self.settings.waitkey
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=self.settings.executor)  # 添加线程池设置
 
+        self.object_info_list = []  # 初始化物体信息列表
+
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_frame)
         self.timer.start(self.waitkey // 30)  # 设置刷新率，例如 30 FPS
@@ -41,6 +45,14 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings):
         self.detect_on = False  # 添加这个布尔变量
         self.ADB_show_on = False
 
+        self.horizontalSlider_videoProgress.setMinimum(0)
+        self.horizontalSlider_videoProgress.setMaximum(100)
+        self.horizontalSlider_videoProgress.setSingleStep(1)  # 添加这一行，将步长设为1
+        self.horizontalSlider_videoProgress.setTracking(True)  # 将setTracking设置为True，使得拖动更加顺滑
+
+        self.signal_slots_function()
+
+    def signal_slots_function(self):
         self.radioButton_camera.clicked.connect(self.settings.selected_video_source)
         self.radioButton_local.clicked.connect(self.settings.selected_video_source)
         self.radioButton_default_model.clicked.connect(self.settings.selected_model_source)
@@ -48,11 +60,6 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings):
 
         self.lineEdit_Message.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.lineEdit_Message.customContextMenuRequested.connect(self.contextMenuEvent)
-
-        self.horizontalSlider_videoProgress.setMinimum(0)
-        self.horizontalSlider_videoProgress.setMaximum(100)
-        self.horizontalSlider_videoProgress.setSingleStep(1)  # 添加这一行，将步长设为1
-        self.horizontalSlider_videoProgress.setTracking(True)  # 将setTracking设置为True，使得拖动更加顺滑
         self.horizontalSlider_videoProgress.valueChanged.connect(self.on_slider_value_changed)
         self.lineEdit_currentTime.textChanged.connect(self.on_current_time_changed)
 
@@ -117,7 +124,11 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings):
             preprocessed_frame = preprocess_frame(frame, height, self.settings)
             detection_frame = preprocessed_frame.copy()
 
-            detection_frame = self.executor.submit(process_frame, detection_frame, self.model).result()  # 使用线程池处理帧
+            # detection_frame = self.executor.submit(process_frame, detection_frame, self.model).result()  # 使用线程池处理帧
+            detection_frame, object_info_list = self.executor.submit(process_frame, detection_frame,
+                                                                     self.model).result()
+            self.object_info_list = object_info_list  # 保存物体信息列表
+
             detection_frame = cv2.cvtColor(detection_frame, cv2.COLOR_BGR2RGB)
 
             h, w, ch = detection_frame.shape
@@ -151,6 +162,28 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings):
             self.label_ADBexchange.setPixmap(pixmap_raw)
             self.label_ADBexchange.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
+    def pack_object_info_to_can_frame(self, object_info_list):
+        can_frames = []
+        try:
+            for object_info in object_info_list:
+                can_id = self.detect_on  # 从 spinBox 控件获取 CAN ID
+                data = [
+                    object_info['category'],
+                    int(object_info['x']),
+                    int(object_info['y']),
+                    int(object_info['width']),
+                    int(object_info['height'])
+                ]
+                can_frame = (can_id, data)
+                can_frames.append(can_frame)
+
+        except (TypeError, IndexError):
+            # 如果 object_info_list 是 None 或者是空列表，或者无法进行迭代，就会抛出 TypeError 或 IndexError 异常
+            # 在这里处理异常，例如打印错误信息，返回一个空的 CAN 帧列表
+            print('Error: object_info_list is None or empty')
+            return can_frames
+        return can_frames
+
     def contextMenuEvent(self, event):
         context_menu = QMenu(self)
         clear_action = context_menu.addAction("清除消息")
@@ -173,11 +206,13 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings):
             self.pushButton_startend_detect.setText('暂停视觉识别')
             self.pushButton_startend_detect.setStyleSheet('background-color: lightblue')
             self.detect_on = True  # 修改布尔变量的值
+            self.can_communication.set_detect_on(True)  # 调用CANCommunication类中的函数
 
         else:
             self.pushButton_startend_detect.setText('启动视觉识别')
             self.pushButton_startend_detect.setStyleSheet('')
             self.detect_on = False  # 修改布尔变量的值
+            self.can_communication.set_detect_on(False)  # 调用CANCommunication类中的函数
 
             # 添加下方代码，程序从新回到视频开头执行；
             # 若删除下方代码，程序实现暂停功能，当再次点击按钮，程序接着暂停时的画面继续执行。
@@ -192,6 +227,9 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings):
     def stop_and_close(self):
         self.detect_on = False  # 停止视觉检测
         self.ADB_show_on = False  # 停止显示原始视频
+        self.pushButton_startend_detect.setText('启动视觉识别')
+        self.pushButton_startend_detect.setStyleSheet('')
+
         if self.cap:
             self.cap.release()  # 释放资源
             self.cap = None
