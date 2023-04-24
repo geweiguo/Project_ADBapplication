@@ -106,17 +106,19 @@ def process_frame(frame, model):
     return draw_bboxes(frame, results)
 
 # 6. 后处理
-def draw_bboxes(img, results):
+def draw_bboxes(img, results, conf_threshold=0.5):
     """
     在输入的图像上绘制检测到的边界框。
     :param img: 输入的图像
     :param results: 检测结果
+    :param conf_threshold: 置信度阈值，默认为 0.5
     :return: 绘制边界框后的图像
     """
     for *box, conf, cls in results.xyxy[0]:
-        if int(cls) in [0, 1]:  # 只绘制人和车两个类别的检测结果
+        if conf >= conf_threshold and int(cls) in [0, 1]:  # 只绘制人和车两个类别的检测结果，且置信度大于等于阈值
             label = f"{results.names[int(cls)]} {conf:.2f}"
             x1, y1, x2, y2 = map(int, box)
             img = cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 2)
             img = cv2.putText(img, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
     return img
+
