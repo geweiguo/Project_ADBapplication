@@ -6,10 +6,12 @@ from Slot.VIS.settings import Settings
 from Slot.VIS.visual_perception_opencv import process_frame, select_device, preprocess_frame, load_model
 import cv2
 from PyQt6.QtCore import QTimer, Qt, pyqtSignal
-from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox
-from PyQt6.QtGui import QImage, QPixmap
+from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QGraphicsScene
+from PyQt6.QtGui import QImage, QPixmap, QBrush, QColor
 from PyQt6.QtWidgets import QMenu
 from Slot.CAN.can_communication import CANCommunication
+from PyQt6.QtWidgets import QGraphicsPixmapItem
+
 
 qInitResources()  # 初始化资源
 
@@ -18,6 +20,26 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
         self.setupUi(self)
+
+        # 设置 QGraphicsView 和 QGraphicsScene 的背景颜色为透明
+        self.graphicsView.setBackgroundBrush(QColor(0, 0, 0, 0))
+        scene = QGraphicsScene()
+        scene.setBackgroundBrush(QBrush(QColor(0, 0, 0, 0)))
+        self.graphicsView.setScene(scene)
+
+        # 创建 30000x1000 像素的 QImage，并填充半透明白色（透明度 50%）
+        self.image = QImage(30000, 1000, QImage.Format.Format_ARGB32)
+        self.image.fill(QColor(255, 255, 255, 128))
+
+        # 将 QImage 显示在 QGraphicsView 中
+        pixmap = QPixmap.fromImage(self.image)
+        pixmap_item = QGraphicsPixmapItem(pixmap)
+        self.graphicsView.scene().addItem(pixmap_item)
+
+        # 设置 QGraphicsView 的 viewport 透明
+        self.graphicsView.viewport().setAutoFillBackground(False)
+        self.graphicsView.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+
         self.settings = Settings(parent=self)
         self.can_communication = CANCommunication(parent=self)
         self.can_communication.set_text_edit_can_message(self.textEdit_CANmessage)
@@ -49,6 +71,8 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
         self.horizontalSlider_videoProgress.setMaximum(100)
         self.horizontalSlider_videoProgress.setSingleStep(1)  # 添加这一行，将步长设为1
         self.horizontalSlider_videoProgress.setTracking(True)  # 将setTracking设置为True，使得拖动更加顺滑
+
+        self.can_communication.set_text_edit_can_message(self.textEdit_CANmessage)
 
         self.signal_slots_function()
 
