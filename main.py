@@ -73,6 +73,7 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
         self.horizontalSlider_videoProgress.setTracking(True)  # 将setTracking设置为True，使得拖动更加顺滑
 
         self.can_communication.set_text_edit_can_message(self.textEdit_CANmessage)
+        self.can_communication.set_text_edit_can_message_receive(self.textEdit_CANmessage_receive)
 
         self.signal_slots_function()
 
@@ -190,13 +191,13 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
         can_frames = []
 
         for object_info in object_info_list:
-            can_id = self.detect_on  # 从 spinBox 控件获取 CAN ID
+            can_id = self.can_communication.device_id  # 从 spinBox 控件获取 CAN ID
             data = [
-                object_info['category'],
-                int(object_info['x']),
-                int(object_info['y']),
-                int(object_info['width']),
-                int(object_info['height'])
+                min(max(object_info['category'], 0), 255),
+                min(max(int(object_info['x']), 0), 255),
+                min(max(int(object_info['y']), 0), 255),
+                min(max(int(object_info['width']), 0), 255),
+                min(max(int(object_info['height']), 0), 255)
             ]
             can_frame = (can_id, data)
             can_frames.append(can_frame)
