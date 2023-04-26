@@ -18,6 +18,33 @@ class CustomListener(can.Listener):
         if self.enabled:  # 添加这一行
             self.parent.on_message_received(msg)
 
+# 定义一个CustomMessage类，继承自can.Message类
+class CustomMessage(can.Message):
+    # 为CustomMessage类添加一个额外的属性is_received，用于表示消息是发送的还是接收的
+    def __init__(self, is_received=False, *args, **kwargs):
+        # 调用父类的__init__方法，传入参数
+        super().__init__(*args, **kwargs)
+        # 设置is_received属性
+        self.is_received = is_received
+
+    # 重写__str__方法，用于自定义消息的字符串表示
+    def __str__(self):
+        # 根据is_received属性值决定是否显示"S Tx"状态
+        status = "S Tx" if not self.is_received else ""
+        # 使用字符串格式化方法，生成自定义格式的字符串表示
+        return "Timestamp: {:12.6f}    ID: {:04x}    {}                DL:  {}    {}".format(
+            # 使用self.timestamp属性，如果为None，则使用0
+            self.timestamp or 0,
+            # 使用self.arbitration_id属性表示CAN消息的ID
+            self.arbitration_id,
+            # 根据is_received属性添加状态字符串
+            status,
+            # 使用self.dlc属性表示CAN消息的数据长度
+            self.dlc,
+            # 使用列表推导式生成十六进制表示的数据字节字符串列表，并使用.join()方法将其连接为单个字符串
+            " ".join(["{:02x}".format(byte) for byte in self.data]),
+        )
+
 
 
 class CANCommunication:
@@ -161,14 +188,16 @@ class CANCommunication:
                 self.stop_send_can()
 
     # 新增部分
+    import can
+
     def send_can_frame(self, can_frame):
         if self.bus1 is not None:
-            can_id, data = can_frame  # 新增：从 can_frame 中提取 can_id 和 data
-            message = can.Message(arbitration_id=can_id, data=data, is_extended_id=False)  # 新增：创建一个新的 can.Message
-            try:
-                self.bus1.send(message)  # 修改这一行：使用新创建的 message 变量发送 CAN 消息
-                self.textEdit_CANmessage.append(f"发送 CAN 帧: {str(message)}")
+            can_id, data = can_frame
+            message = CustomMessage(arbitration_id=can_id, data=data, is_extended_id=False, timestamp=can.util.time())
 
+            try:
+                self.bus1.send(message)
+                self.textEdit_CANmessage.append(f"发送CAN帧: {str(message)}")
             except can.CanError as e:
                 self.textEdit_CANmessage.append(f"发送失败: {str(e)}")
 
@@ -214,7 +243,7 @@ class CANCommunication:
         self.parent.pushButton_start_receive_CAN.setText("开始接收CAN")
 
     def on_message_received(self, msg):
-        self.textEdit_CANmessage_receive.append(f"接收到 CAN 帧: {str(msg)}")
+        self.textEdit_CANmessage_receive.append(f"接收CAN 帧: {str(msg)}")
 
     def set_text_edit_can_message(self, text_edit):
         self.textEdit_CANmessage = text_edit
