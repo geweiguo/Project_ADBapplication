@@ -31,8 +31,11 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
         scene.setBackgroundBrush(QBrush(QColor(0, 0, 0, 0)))
         self.graphicsView.setScene(scene)
 
+        self.image_width = 1000
+        self.image_height = 350
+
         # 创建 1000x350 像素的 QImage，并填充半透明白色（透明度 50%）
-        self.image = QImage(1000, 350, QImage.Format.Format_ARGB32)
+        self.image = QImage(self.image_width, self.image_height, QImage.Format.Format_ARGB32)
         self.image.fill(QColor(255, 255, 255, 128))
 
         # 将 QImage 显示在 QGraphicsView 中
@@ -47,12 +50,13 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
         # 设置定时器以更新 QImage
         self.timer_image = QTimer()
         self.timer_image.timeout.connect(self.update_image)
-        self.timer_image.start(200)  # 每1000毫秒（1秒）更新一次
+        self.timer_image.start(2)  # 每1000毫秒（1秒）更新一次
 
         self.ADBshow = False
         # 更新ADB画面部分 结束
 
         self.settings = Settings(parent=self)
+
         self.can_communication = CANCommunication(parent=self)
         self.can_communication.set_text_edit_can_message(self.textEdit_CANmessage)
 
@@ -63,7 +67,7 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
         self.input_video = None
         self.input_video_check = None
         self.cap = None
-        self.scale_ratio = 0.8  # 默认缩放比例为 1.0（原始尺寸）
+        self.scale_ratio = 1  # 默认缩放比例为 1.0（原始尺寸）
 
         self.buffer_size = self.settings.Buffer_size  # 添加缓冲区大小设置
         self.skip_frames = self.settings.Skip_frames  # 添加跳帧设置
@@ -119,25 +123,13 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
             self.pushButton_ADBshow.setStyleSheet('')
             self.ADBshow = False  # 修改布尔变量的值
 
-    def get_virtual_can_data(self):
-        # 模拟从虚拟 CAN 总线获取数据
-        x = random.randint(0, 1000)
-        y = random.randint(0, 350)
-        width = random.randint(10, 200)
-        height = random.randint(10, 100)
-        return x, y, width, height
-
     def update_image(self):
+        self.image.fill(QColor(255, 255, 255, 128))
         if not self.ADBshow:
             return
-        print('self.ADBshow is True')
-        # 清除之前的内容
-        self.image.fill(QColor(255, 255, 255, 128))
 
         # 从 CAN 总线接收数据
-        # can_data = self.get_virtual_can_data()
         can_data = self.latest_can_data  # 修改这一行
-        print('can_data', can_data)
 
         if can_data is not None:
             x, y, width, height = can_data
@@ -254,13 +246,15 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
             can_id = self.can_communication.device_id  # 从 spinBox 控件获取 CAN ID
             data = [
                 min(max(object_info['category'], 0), 255),
-                min(max(int(object_info['x']), 0), 255),
-                min(max(int(object_info['y']), 0), 255),
-                min(max(int(object_info['width']), 0), 255),
-                min(max(int(object_info['height']), 0), 255)
+                min(max(int(object_info['x'] * 255 / self.image_width), 0), 255),
+                min(max(int(object_info['y'] * 255 / self.image_height), 0), 255),
+                min(max(int(object_info['width'] * 255 / self.image_width), 0), 255),
+                min(max(int(object_info['height'] * 255 / self.image_height), 0), 255)
             ]
+
             can_frame = (can_id, data)
             can_frames.append(can_frame)
+            print('data', data)
 
         return can_frames
 

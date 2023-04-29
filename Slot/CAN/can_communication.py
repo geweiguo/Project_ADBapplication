@@ -19,7 +19,9 @@ class CustomListener(can.Listener):
             self.counter += 1
             if self.counter % 10 == 0:
                 self.counter = 0
-                self.parent.on_message_received(msg)
+                self.parent.on_message_received(msg)  # 更新UI控件CAN消息接收
+
+            self.parent.message_to_update_image(msg)  # 将接收的CAN消息发送给“update_image”用于更新画面
 
 
 # 定义一个CustomMessage类，继承自can.Message类
@@ -254,19 +256,24 @@ class CANCommunication:
     def on_message_received(self, msg):
         self.textEdit_CANmessage_receive.append(f"接收CAN 帧: {str(msg)}")
 
-        latest_can_data = None
+    def message_to_update_image(self, msg):
         if msg is not None:
             self.latest_can_data = msg  # 更新最新的 CAN 数据
             data = msg.data
 
-            x = data[1]
-            y = data[2]
-            width = data[3]
-            height = data[4]
+            x = int.from_bytes(data[1:2], 'big')
+            y = int.from_bytes(data[2:3], 'big')
+            width = int.from_bytes(data[3:4], 'big')
+            height = int.from_bytes(data[4:5], 'big')
+
+            x = int(x / 255 * 1000)
+            y = int(y / 255 * 350)
+            width = int(width / 255 * 1000)
+            height = int(height / 255 * 350)
 
             self.latest_can_data = (x, y, width, height)
 
-        # print(msg)
+        print('msg', msg)
         print('latest_can_data', self.latest_can_data)
         return self.latest_can_data
 

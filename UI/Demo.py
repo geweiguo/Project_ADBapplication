@@ -138,7 +138,7 @@ class Ui_MainWindow(object):
         self.lineEdit_2.setObjectName("lineEdit_2")
         self.doubleSpinBox_crop_ratio = QtWidgets.QDoubleSpinBox(parent=self.groupBox)
         self.doubleSpinBox_crop_ratio.setGeometry(QtCore.QRect(200, 20, 62, 22))
-        self.doubleSpinBox_crop_ratio.setDecimals(1)
+        self.doubleSpinBox_crop_ratio.setDecimals(2)
         self.doubleSpinBox_crop_ratio.setMaximum(1.0)
         self.doubleSpinBox_crop_ratio.setSingleStep(0.1)
         self.doubleSpinBox_crop_ratio.setProperty("value", 1.0)
@@ -152,7 +152,7 @@ class Ui_MainWindow(object):
         self.lineEdit_.setObjectName("lineEdit_")
         self.doubleSpinBox_scaled_ratio = QtWidgets.QDoubleSpinBox(parent=self.groupBox)
         self.doubleSpinBox_scaled_ratio.setGeometry(QtCore.QRect(200, 80, 62, 22))
-        self.doubleSpinBox_scaled_ratio.setDecimals(1)
+        self.doubleSpinBox_scaled_ratio.setDecimals(2)
         self.doubleSpinBox_scaled_ratio.setMaximum(5.0)
         self.doubleSpinBox_scaled_ratio.setSingleStep(0.1)
         self.doubleSpinBox_scaled_ratio.setProperty("value", 1.0)
@@ -197,7 +197,7 @@ class Ui_MainWindow(object):
         self.lineEdit_Executor.setObjectName("lineEdit_Executor")
         self.spinBox_executor = QtWidgets.QSpinBox(parent=self.groupBox_2)
         self.spinBox_executor.setGeometry(QtCore.QRect(200, 80, 61, 22))
-        self.spinBox_executor.setProperty("value", 4)
+        self.spinBox_executor.setProperty("value", 6)
         self.spinBox_executor.setObjectName("spinBox_executor")
         self.lineEdit_WaitKey = QtWidgets.QLineEdit(parent=self.groupBox_2)
         self.lineEdit_WaitKey.setEnabled(False)
@@ -419,7 +419,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(2)
+        self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
