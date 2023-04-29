@@ -1133,8 +1133,8 @@
               <rect>
                <x>0</x>
                <y>10</y>
-               <width>1000</width>
-               <height>350</height>
+               <width>1002</width>
+               <height>352</height>
               </rect>
              </property>
              <property name="sizePolicy">

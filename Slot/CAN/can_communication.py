@@ -83,6 +83,8 @@ class CANCommunication:
         self.latest_can_data = None  # 用于存储最新的 CAN 数据
         self.counter_send = 0
 
+        self.can_messages = []  # 新增此行
+
     def set_detect_on(self, value):
         self.detect_on = value
         self.parent.detect_on = value
@@ -177,7 +179,7 @@ class CANCommunication:
             self.sending_data = True
             self.parent.sending_data = True
             self.parent.pushButton_start_send_CAN.setText("停止发送CAN")
-            self.send_can_timer.start(30)  # 启动定时器，每 100 毫秒调用一次 send_can_data
+            self.send_can_timer.start(2)  # 启动定时器，每 100 毫秒调用一次 send_can_data
             """
             self.send_can_timer.timeout.connect(self.send_can_data) 
             """
@@ -258,7 +260,6 @@ class CANCommunication:
 
     def message_to_update_image(self, msg):
         if msg is not None:
-            self.latest_can_data = msg  # 更新最新的 CAN 数据
             data = msg.data
 
             x = int.from_bytes(data[1:2], 'big')
@@ -271,11 +272,7 @@ class CANCommunication:
             width = int(width / 255 * 1000)
             height = int(height / 255 * 350)
 
-            self.latest_can_data = (x, y, width, height)
-
-        print('msg', msg)
-        print('latest_can_data', self.latest_can_data)
-        return self.latest_can_data
+            self.can_messages.append((x, y, width, height))  # 将消息添加到列表中
 
     def set_text_edit_can_message(self, text_edit):
         self.textEdit_CANmessage = text_edit

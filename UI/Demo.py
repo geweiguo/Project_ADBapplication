@@ -365,7 +365,7 @@ class Ui_MainWindow(object):
         self.label_ADBexchange.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeading|QtCore.Qt.AlignmentFlag.AlignLeft|QtCore.Qt.AlignmentFlag.AlignTop)
         self.label_ADBexchange.setObjectName("label_ADBexchange")
         self.graphicsView = QtWidgets.QGraphicsView(parent=self.page)
-        self.graphicsView.setGeometry(QtCore.QRect(0, 10, 1000, 350))
+        self.graphicsView.setGeometry(QtCore.QRect(0, 10, 1002, 352))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)

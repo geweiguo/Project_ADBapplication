@@ -24,6 +24,9 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
         super(MainWindow, self).__init__(*args, **kwargs)
         self.setupUi(self)
 
+        self.settings = Settings(parent=self)
+        self.waitkey = self.settings.waitkey
+
         # 更新ADB画面部分 开始
         # 设置 QGraphicsView 和 QGraphicsScene 的背景颜色为透明
         self.graphicsView.setBackgroundBrush(QColor(0, 0, 0, 0))
@@ -50,15 +53,14 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
         # 设置定时器以更新 QImage
         self.timer_image = QTimer()
         self.timer_image.timeout.connect(self.update_image)
-        self.timer_image.start(2)  # 每1000毫秒（1秒）更新一次
+        self.timer_image.start(self.waitkey // 30)   # 与视频显示帧率保持一致
 
         self.ADBshow = False
         # 更新ADB画面部分 结束
 
-        self.settings = Settings(parent=self)
-
         self.can_communication = CANCommunication(parent=self)
         self.can_communication.set_text_edit_can_message(self.textEdit_CANmessage)
+        self.can_messages = self.can_communication.can_messages
 
         self.device = select_device(0)
         self.model_path = None
@@ -71,7 +73,7 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
 
         self.buffer_size = self.settings.Buffer_size  # 添加缓冲区大小设置
         self.skip_frames = self.settings.Skip_frames  # 添加跳帧设置
-        self.waitkey = self.settings.waitkey
+
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=self.settings.executor)  # 添加线程池设置
 
         self.object_info_list = []  # 初始化物体信息列表
@@ -91,8 +93,6 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
 
         self.can_communication.set_text_edit_can_message(self.textEdit_CANmessage)
         self.can_communication.set_text_edit_can_message_receive(self.textEdit_CANmessage_receive)
-
-        self.update_lock = threading.Lock()  # 添加一个线程锁
 
         self.signal_slots_function()
 
@@ -128,21 +128,22 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
         if not self.ADBshow:
             return
 
-        # 从 CAN 总线接收数据
-        can_data = self.latest_can_data  # 修改这一行
-
-        if can_data is not None:
-            x, y, width, height = can_data
+        painter = QPainter(self.image)  # 将 QPainter 的实例化移到循环外
+        painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Clear)
+        for message in self.can_messages:
+            x, y, width, height = message
 
             # 在 QImage 上绘制矩形
-            painter = QPainter(self.image)
-            painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Clear)
             painter.fillRect(x, y, width, height, QColor(255, 255, 255, 128))
-            painter.end()
 
-            # 更新 QGraphicsView 显示
-            pixmap = QPixmap.fromImage(self.image)
-            self.pixmap_item.setPixmap(pixmap)
+        painter.end()  # 将 QPainter 的结束操作移到循环外
+
+        # 更新 QGraphicsView 显示
+        pixmap = QPixmap.fromImage(self.image)
+        self.pixmap_item.setPixmap(pixmap)
+
+        # 清空消息列表
+        self.can_messages.clear()
 
     def set_scale_ratio(self, scale_ratio):
         self.scale_ratio = scale_ratio
@@ -254,7 +255,6 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
 
             can_frame = (can_id, data)
             can_frames.append(can_frame)
-            print('data', data)
 
         return can_frames
 
