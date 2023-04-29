@@ -98,7 +98,7 @@
            </size>
           </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="widget">
            <attribute name="title">
@@ -1025,7 +1025,7 @@
              </property>
             </widget>
            </widget>
-           <widget class="QPushButton" name="pushButton_start_ADBshow">
+           <widget class="QPushButton" name="pushButton_original_video">
             <property name="geometry">
              <rect>
               <x>10</x>

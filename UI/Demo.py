@@ -327,9 +327,9 @@ class Ui_MainWindow(object):
         self.lineEdit_11.setStyleSheet("font: 9pt \"Microsoft YaHei UI\";")
         self.lineEdit_11.setFrame(False)
         self.lineEdit_11.setObjectName("lineEdit_11")
-        self.pushButton_start_ADBshow = QtWidgets.QPushButton(parent=self.widget1)
-        self.pushButton_start_ADBshow.setGeometry(QtCore.QRect(10, 310, 141, 51))
-        self.pushButton_start_ADBshow.setObjectName("pushButton_start_ADBshow")
+        self.pushButton_original_video = QtWidgets.QPushButton(parent=self.widget1)
+        self.pushButton_original_video.setGeometry(QtCore.QRect(10, 310, 141, 51))
+        self.pushButton_original_video.setObjectName("pushButton_original_video")
         self.pushButton_ADBshow = QtWidgets.QPushButton(parent=self.widget1)
         self.pushButton_ADBshow.setGeometry(QtCore.QRect(180, 310, 151, 51))
         self.pushButton_ADBshow.setObjectName("pushButton_ADBshow")
@@ -419,7 +419,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(2)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -471,7 +471,7 @@ class Ui_MainWindow(object):
         self.lineEdit_9.setText(_translate("MainWindow", "列"))
         self.lineEdit_10.setText(_translate("MainWindow", "间距"))
         self.lineEdit_11.setText(_translate("MainWindow", "间距"))
-        self.pushButton_start_ADBshow.setText(_translate("MainWindow", "原始画面"))
+        self.pushButton_original_video.setText(_translate("MainWindow", "原始画面"))
         self.pushButton_ADBshow.setText(_translate("MainWindow", "ADB ON"))
         self.groupBox_10.setTitle(_translate("MainWindow", "消息"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.widget1), _translate("MainWindow", "ADB交互模块"))

@@ -1,16 +1,19 @@
 import sys
 import concurrent.futures
+import threading
+import random
 from UI.Demo import Ui_MainWindow
 from UI.resourceforQt.background import qInitResources
 from Slot.VIS.settings import Settings
 from Slot.VIS.visual_perception_opencv import process_frame, select_device, preprocess_frame, load_model
 import cv2
-from PyQt6.QtCore import QTimer, Qt, pyqtSignal
-from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QGraphicsScene
-from PyQt6.QtGui import QImage, QPixmap, QBrush, QColor
+from PyQt6.QtWidgets import QMessageBox
 from PyQt6.QtWidgets import QMenu
 from Slot.CAN.can_communication import CANCommunication
-from PyQt6.QtWidgets import QGraphicsPixmapItem
+import sys
+from PyQt6.QtCore import QTimer, Qt, pyqtSignal
+from PyQt6.QtGui import QColor, QBrush, QImage, QPixmap, QPainter
+from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsPixmapItem
 
 
 qInitResources()  # 初始化资源
@@ -21,24 +24,33 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
         super(MainWindow, self).__init__(*args, **kwargs)
         self.setupUi(self)
 
+        # 更新ADB画面部分 开始
         # 设置 QGraphicsView 和 QGraphicsScene 的背景颜色为透明
         self.graphicsView.setBackgroundBrush(QColor(0, 0, 0, 0))
         scene = QGraphicsScene()
         scene.setBackgroundBrush(QBrush(QColor(0, 0, 0, 0)))
         self.graphicsView.setScene(scene)
 
-        # 创建 30000x1000 像素的 QImage，并填充半透明白色（透明度 50%）
-        self.image = QImage(30000, 1000, QImage.Format.Format_ARGB32)
+        # 创建 1000x350 像素的 QImage，并填充半透明白色（透明度 50%）
+        self.image = QImage(1000, 350, QImage.Format.Format_ARGB32)
         self.image.fill(QColor(255, 255, 255, 128))
 
         # 将 QImage 显示在 QGraphicsView 中
         pixmap = QPixmap.fromImage(self.image)
-        pixmap_item = QGraphicsPixmapItem(pixmap)
-        self.graphicsView.scene().addItem(pixmap_item)
+        self.pixmap_item = QGraphicsPixmapItem(pixmap)
+        self.graphicsView.scene().addItem(self.pixmap_item)
 
         # 设置 QGraphicsView 的 viewport 透明
         self.graphicsView.viewport().setAutoFillBackground(False)
         self.graphicsView.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+
+        # 设置定时器以更新 QImage
+        self.timer_image = QTimer()
+        self.timer_image.timeout.connect(self.update_image)
+        self.timer_image.start(200)  # 每1000毫秒（1秒）更新一次
+
+        self.ADBshow = False
+        # 更新ADB画面部分 结束
 
         self.settings = Settings(parent=self)
         self.can_communication = CANCommunication(parent=self)
@@ -60,12 +72,13 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
 
         self.object_info_list = []  # 初始化物体信息列表
 
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.update_frame)
-        self.timer.start(self.waitkey // 30)  # 设置刷新率，例如 30 FPS
+        # 更新帧
+        self.timer_frame = QTimer()
+        self.timer_frame.timeout.connect(self.update_frame)
+        self.timer_frame.start(self.waitkey // 30)  # 设置刷新率，例如 30 FPS
 
         self.detect_on = False  # 添加这个布尔变量
-        self.ADB_show_on = False
+        self.original_video = False
 
         self.horizontalSlider_videoProgress.setMinimum(0)
         self.horizontalSlider_videoProgress.setMaximum(100)
@@ -74,6 +87,8 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
 
         self.can_communication.set_text_edit_can_message(self.textEdit_CANmessage)
         self.can_communication.set_text_edit_can_message_receive(self.textEdit_CANmessage_receive)
+
+        self.update_lock = threading.Lock()  # 添加一个线程锁
 
         self.signal_slots_function()
 
@@ -90,7 +105,52 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
 
         self.pushButton_startend_detect.clicked.connect(self.on_button_click)
         self.pushButton_closedprocess.clicked.connect(self.stop_and_close)
-        self.pushButton_start_ADBshow.clicked.connect(self.toggle_ADBshow)
+        self.pushButton_original_video.clicked.connect(self.open_original_video)
+        self.pushButton_ADBshow.clicked.connect(self.ADBshow_state)
+
+    def ADBshow_state(self):
+        if self.pushButton_ADBshow.text() == 'ADB ON':
+            self.pushButton_ADBshow.setText('ADB OFF')
+            self.pushButton_ADBshow.setStyleSheet('background-color: lightblue')
+            self.ADBshow = True  # 修改布尔变量的值
+
+        else:
+            self.pushButton_ADBshow.setText('ADB ON')
+            self.pushButton_ADBshow.setStyleSheet('')
+            self.ADBshow = False  # 修改布尔变量的值
+
+    def get_virtual_can_data(self):
+        # 模拟从虚拟 CAN 总线获取数据
+        x = random.randint(0, 1000)
+        y = random.randint(0, 350)
+        width = random.randint(10, 200)
+        height = random.randint(10, 100)
+        return x, y, width, height
+
+    def update_image(self):
+        if not self.ADBshow:
+            return
+        print('self.ADBshow is True')
+        # 清除之前的内容
+        self.image.fill(QColor(255, 255, 255, 128))
+
+        # 从 CAN 总线接收数据
+        # can_data = self.get_virtual_can_data()
+        can_data = self.latest_can_data  # 修改这一行
+        print('can_data', can_data)
+
+        if can_data is not None:
+            x, y, width, height = can_data
+
+            # 在 QImage 上绘制矩形
+            painter = QPainter(self.image)
+            painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Clear)
+            painter.fillRect(x, y, width, height, QColor(255, 255, 255, 128))
+            painter.end()
+
+            # 更新 QGraphicsView 显示
+            pixmap = QPixmap.fromImage(self.image)
+            self.pixmap_item.setPixmap(pixmap)
 
     def set_scale_ratio(self, scale_ratio):
         self.scale_ratio = scale_ratio
@@ -174,7 +234,7 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
                 slider_value = int(current_frame / total_frames * 100)
                 self.horizontalSlider_videoProgress.setValue(slider_value)
 
-        if self.ADB_show_on:  # 仅当 self.ADB_show_on 为 True 时显示原始视频
+        if self.original_video:  # 仅当 self.ADB_show_on 为 True 时显示原始视频
             # 显示预处理后的帧（不带检测框）到 ADB 交互显示区
             preprocessed_frame = cv2.cvtColor(preprocessed_frame, cv2.COLOR_BGR2RGB)
             h_raw, w_raw, ch_raw = preprocessed_frame.shape
@@ -241,12 +301,12 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
             #     self.cap.release()  # 释放资源
             #     self.cap = None
 
-    def toggle_ADBshow(self):
-        self.ADB_show_on = not self.ADB_show_on
+    def open_original_video(self):
+        self.original_video = not self.original_video
 
     def stop_and_close(self):
         self.detect_on = False  # 停止视觉检测
-        self.ADB_show_on = False  # 停止显示原始视频
+        self.original_video = False  # 停止显示原始视频
         self.pushButton_startend_detect.setText('启动视觉识别')
         self.pushButton_startend_detect.setStyleSheet('')
 
