@@ -8,15 +8,19 @@ from can.interfaces.virtual import VirtualBus
 from queue import Queue
 
 
-
 class CustomListener(can.Listener):
     def __init__(self, parent):
         self.parent = parent
         self.enabled = False  # 添加这一行
+        self.counter = 0
 
     def on_message_received(self, msg):
         if self.enabled:  # 添加这一行
-            self.parent.on_message_received(msg)
+            self.counter += 1
+            if self.counter % 10 == 0:
+                self.counter = 0
+                self.parent.on_message_received(msg)
+
 
 # 定义一个CustomMessage类，继承自can.Message类
 class CustomMessage(can.Message):
@@ -46,7 +50,6 @@ class CustomMessage(can.Message):
         )
 
 
-
 class CANCommunication:
     def __init__(self, parent=None):
         super(CANCommunication, self).__init__()
@@ -74,6 +77,8 @@ class CANCommunication:
         self.listener2 = CustomListener(self.parent)  # 初始化 listener2
         self.notifier1 = None  # 初始化 notifier1
         self.notifier2 = None  # 初始化 notifier2
+
+        self.latest_can_data = None  # 用于存储最新的 CAN 数据
 
     def set_detect_on(self, value):
         self.detect_on = value
@@ -229,13 +234,34 @@ class CANCommunication:
         self.receive_thread.start()
 
     def receive_can_data(self):
+        latest_can_data = None
         while self.receive_data:
-            # 等待接收到的消息
-            msg = self.bus2.recv(5)
-            print('msg', msg)
-            if msg is not None:
-                self.listener2.on_message_received(msg)
-            time.sleep(0.1)  # 添加这一行
+            try:
+                msg = self.bus2.recv(0)  # 设置接收超时时间为 0
+                if msg is not None:
+                    self.latest_can_data = msg  # 更新最新的 CAN 数据
+                    # 从接收到的 CAN 消息中提取数据
+                    can_id, data = msg
+
+                    x = data[1]
+                    y = data[2]
+                    width = data[3]
+                    height = data[4]
+
+                    latest_can_data = (x, y, width, height)
+
+                    # 更新 UI
+                    self.listener2.on_message_received(msg)
+                    time.sleep(0.1)
+                else:
+                    break
+            except Exception as e:
+                print(f"接收 CAN 消息时发生异常: {e}")
+                self.parent.textEdit_CANmessage_receive.append(f"接收 CAN 消息时发生异常: {e}")
+                self.stop_receive_can()
+                break
+
+        return latest_can_data
 
     def stop_receive_can(self):
         self.receive_data = False
@@ -244,6 +270,7 @@ class CANCommunication:
 
     def on_message_received(self, msg):
         self.textEdit_CANmessage_receive.append(f"接收CAN 帧: {str(msg)}")
+        # print(msg)
 
     def set_text_edit_can_message(self, text_edit):
         self.textEdit_CANmessage = text_edit
