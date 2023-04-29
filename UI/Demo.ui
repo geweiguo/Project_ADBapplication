@@ -98,7 +98,7 @@
            </size>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="widget">
            <attribute name="title">
@@ -1029,13 +1029,13 @@
             <property name="geometry">
              <rect>
               <x>10</x>
-              <y>310</y>
+              <y>250</y>
               <width>141</width>
-              <height>51</height>
+              <height>111</height>
              </rect>
             </property>
             <property name="text">
-             <string>原始画面</string>
+             <string>打开原始画面</string>
             </property>
            </widget>
            <widget class="QPushButton" name="pushButton_ADBshow">
@@ -1073,6 +1073,19 @@
               </rect>
              </property>
             </widget>
+           </widget>
+           <widget class="QPushButton" name="pushButton_lighting_on">
+            <property name="geometry">
+             <rect>
+              <x>180</x>
+              <y>250</y>
+              <width>151</width>
+              <height>51</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Lighting ON</string>
+            </property>
            </widget>
           </widget>
          </widget>

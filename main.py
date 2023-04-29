@@ -15,7 +15,6 @@ from PyQt6.QtCore import QTimer, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QBrush, QImage, QPixmap, QPainter
 from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsPixmapItem
 
-
 qInitResources()  # 初始化资源
 
 
@@ -27,33 +26,18 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
         self.settings = Settings(parent=self)
         self.waitkey = self.settings.waitkey
 
-        # 更新ADB画面部分 开始
-        # 设置 QGraphicsView 和 QGraphicsScene 的背景颜色为透明
-        self.graphicsView.setBackgroundBrush(QColor(0, 0, 0, 0))
-        scene = QGraphicsScene()
-        scene.setBackgroundBrush(QBrush(QColor(0, 0, 0, 0)))
-        self.graphicsView.setScene(scene)
-
         self.image_width = 1000
         self.image_height = 350
 
-        # 创建 1000x350 像素的 QImage，并填充半透明白色（透明度 50%）
-        self.image = QImage(self.image_width, self.image_height, QImage.Format.Format_ARGB32)
-        self.image.fill(QColor(255, 255, 255, 128))
-
-        # 将 QImage 显示在 QGraphicsView 中
-        pixmap = QPixmap.fromImage(self.image)
-        self.pixmap_item = QGraphicsPixmapItem(pixmap)
-        self.graphicsView.scene().addItem(self.pixmap_item)
-
-        # 设置 QGraphicsView 的 viewport 透明
-        self.graphicsView.viewport().setAutoFillBackground(False)
-        self.graphicsView.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        # 初始化时创建并显示 self.image
+        self.pixmap_item = None
+        self.image = None
+        self.init_image()
 
         # 设置定时器以更新 QImage
         self.timer_image = QTimer()
         self.timer_image.timeout.connect(self.update_image)
-        self.timer_image.start(self.waitkey // 30)   # 与视频显示帧率保持一致
+        self.timer_image.start(self.waitkey // 60)  # 与视频显示帧率保持一致
 
         self.ADBshow = False
         # 更新ADB画面部分 结束
@@ -111,17 +95,47 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
         self.pushButton_closedprocess.clicked.connect(self.stop_and_close)
         self.pushButton_original_video.clicked.connect(self.open_original_video)
         self.pushButton_ADBshow.clicked.connect(self.ADBshow_state)
+        self.pushButton_lighting_on.clicked.connect(self.toggle_lighting)
+
+    def toggle_lighting(self):
+        if self.pushButton_lighting_on.text() == 'Lighting ON':
+            self.init_image()
+            self.pushButton_lighting_on.setText('Lighting OFF')
+            self.pushButton_lighting_on.setStyleSheet('background-color: lightblue')
+        else:
+            self.graphicsView.scene().removeItem(self.pixmap_item)
+            self.pushButton_lighting_on.setText('Lighting ON')
+            self.pushButton_lighting_on.setStyleSheet('')
+
+    def init_image(self):
+        self.graphicsView.setBackgroundBrush(QColor(0, 0, 0, 0))
+        scene = QGraphicsScene()
+        scene.setBackgroundBrush(QBrush(QColor(0, 0, 0, 0)))
+        self.graphicsView.setScene(scene)
+
+        self.image = QImage(self.image_width, self.image_height, QImage.Format.Format_ARGB32)
+        self.image.fill(QColor(255, 255, 255, 128))
+
+        pixmap = QPixmap.fromImage(self.image)
+        self.pixmap_item = QGraphicsPixmapItem(pixmap)
+        self.graphicsView.scene().addItem(self.pixmap_item)
+
+        self.graphicsView.viewport().setAutoFillBackground(False)
+        self.graphicsView.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
     def ADBshow_state(self):
         if self.pushButton_ADBshow.text() == 'ADB ON':
             self.pushButton_ADBshow.setText('ADB OFF')
             self.pushButton_ADBshow.setStyleSheet('background-color: lightblue')
-            self.ADBshow = True  # 修改布尔变量的值
+            if self.pushButton_lighting_on.text() == 'Lighting OFF':
+                self.ADBshow = True  # 修改布尔变量的值
 
         else:
             self.pushButton_ADBshow.setText('ADB ON')
             self.pushButton_ADBshow.setStyleSheet('')
             self.ADBshow = False  # 修改布尔变量的值
+            if self.pushButton_lighting_on.text() == 'Lighting OFF':
+                self.init_image()
 
     def update_image(self):
         self.image.fill(QColor(255, 255, 255, 128))
@@ -239,6 +253,8 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
 
             self.label_ADBexchange.setPixmap(pixmap_raw)
             self.label_ADBexchange.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        else:
+            self.label_ADBexchange.clear()
 
     def pack_object_info_to_can_frame(self, object_info_list):
         can_frames = []
@@ -297,6 +313,13 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
 
     def open_original_video(self):
         self.original_video = not self.original_video
+        if self.original_video:
+            self.pushButton_original_video.setStyleSheet('background-color: lightblue')
+            self.pushButton_original_video.setText('关闭原始画面')
+
+        else:
+            self.pushButton_original_video.setText('打开原始画面')
+            self.pushButton_original_video.setStyleSheet('')
 
     def stop_and_close(self):
         self.detect_on = False  # 停止视觉检测

@@ -64,7 +64,7 @@ class CANCommunication:
         self.connected = False
 
         self.can_type = "虚拟CAN"
-        self.bitrate = 500000
+        self.bitrate = 1000000
         self.device_id = 1
         self.bus1 = None
         self.bus2 = None
@@ -82,7 +82,6 @@ class CANCommunication:
 
         self.latest_can_data = None  # 用于存储最新的 CAN 数据
         self.counter_send = 0
-
         self.can_messages = []  # 新增此行
 
     def set_detect_on(self, value):
@@ -145,6 +144,7 @@ class CANCommunication:
             self.textEdit_CANmessage.append("建立CAN 通信")
             self.connected = True
             self.parent.pushButton_Connect_Disconnect_CAN.setText("断开CAN 通信")
+            self.parent.pushButton_Connect_Disconnect_CAN.setStyleSheet('background-color: lightblue')
             try:
                 self.init_can_communication()
                 self.notifier1 = can.Notifier(self.bus1, [self.listener1])  # 创建 Notifier1 实例
@@ -154,10 +154,12 @@ class CANCommunication:
                 self.parent.textEdit_CANmessage.append(f"连接失败: {str(e)}")
                 self.connected = False
                 self.parent.pushButton_Connect_Disconnect_CAN.setText("建立CAN 通信")
+
         else:  # 当前已连接
             self.parent.textEdit_CANmessage.append("断开CAN通信")
             self.connected = False
             self.parent.pushButton_Connect_Disconnect_CAN.setText("建立CAN通信")
+            self.parent.pushButton_Connect_Disconnect_CAN.setStyleSheet('')
             if self.bus1:
                 self.bus1.shutdown()
             if self.bus2:
@@ -179,7 +181,8 @@ class CANCommunication:
             self.sending_data = True
             self.parent.sending_data = True
             self.parent.pushButton_start_send_CAN.setText("停止发送CAN")
-            self.send_can_timer.start(2)  # 启动定时器，每 100 毫秒调用一次 send_can_data
+            self.parent.pushButton_start_send_CAN.setStyleSheet('background-color: lightblue')
+            self.send_can_timer.start(1)  # 启动定时器，每 100 毫秒调用一次 send_can_data
             """
             self.send_can_timer.timeout.connect(self.send_can_data) 
             """
@@ -208,7 +211,7 @@ class CANCommunication:
             try:
                 self.bus1.send(message)
                 self.counter_send += 1
-                if self.counter_send % 10 == 0:
+                if self.counter_send % 15 == 0:
                     self.counter_send = 0
                     self.textEdit_CANmessage.append(f"发送CAN帧: {str(message)}")
             except can.CanError as e:
@@ -218,6 +221,7 @@ class CANCommunication:
         self.sending_data = False
         self.parent.sending_data = False
         self.parent.pushButton_start_send_CAN.setText("开始发送CAN")
+        self.parent.pushButton_start_send_CAN.setStyleSheet('')
         self.send_can_timer.stop()  # 停止定时器
 
     # 接收部分
@@ -231,6 +235,7 @@ class CANCommunication:
             self.receive_data = True
             self.listener2.enabled = True  # 添加这一行
             self.parent.pushButton_start_receive_CAN.setText("停止接收CAN")
+            self.parent.pushButton_start_receive_CAN.setStyleSheet('background-color: lightblue')
             self.start_receive_thread()  # 启动接收线程
 
         else:
@@ -254,6 +259,7 @@ class CANCommunication:
         self.receive_data = False
         self.listener2.enabled = False  # 添加这一行
         self.parent.pushButton_start_receive_CAN.setText("开始接收CAN")
+        self.parent.pushButton_start_receive_CAN.setStyleSheet('')
 
     def on_message_received(self, msg):
         self.textEdit_CANmessage_receive.append(f"接收CAN 帧: {str(msg)}")
@@ -267,10 +273,10 @@ class CANCommunication:
             width = int.from_bytes(data[3:4], 'big')
             height = int.from_bytes(data[4:5], 'big')
 
-            x = int(x / 255 * 1000)
-            y = int(y / 255 * 350)
-            width = int(width / 255 * 1000)
-            height = int(height / 255 * 350)
+            x = int(x / 255 * 1000-5)
+            y = int(y / 255 * 350-35)
+            width = int(width / 255 * 1000+10)
+            height = int(height / 255 * 350+10)
 
             self.can_messages.append((x, y, width, height))  # 将消息添加到列表中
 
