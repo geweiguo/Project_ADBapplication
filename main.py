@@ -1,19 +1,21 @@
 import sys
 import concurrent.futures
-import threading
-import random
-from UI.Demo import Ui_MainWindow
-from UI.resourceforQt.background import qInitResources
-from Slot.VIS.settings import Settings
-from Slot.VIS.visual_perception_opencv import process_frame, select_device, preprocess_frame, load_model
+from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsPixmapItem
 import cv2
 from PyQt6.QtWidgets import QMessageBox
 from PyQt6.QtWidgets import QMenu
-from Slot.CAN.can_communication import CANCommunication
-import sys
-from PyQt6.QtCore import QTimer, Qt, pyqtSignal
+from PyQt6.QtCore import QTimer, Qt
 from PyQt6.QtGui import QColor, QBrush, QImage, QPixmap, QPainter
-from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsPixmapItem
+from PyQt6.QtCore import QRectF
+from PyQt6.QtGui import QPen
+from PyQt5 import QtCore
+
+from UI.Demo import Ui_MainWindow
+from Slot.VIS.settings import Settings
+from Slot.VIS.visual_perception_opencv import process_frame, select_device, preprocess_frame, load_model
+from Slot.CAN.can_communication import CANCommunication
+from UI.resourceforQt.background import qInitResources
+
 
 qInitResources()  # 初始化资源
 
@@ -26,8 +28,8 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
         self.settings = Settings(parent=self)
         self.waitkey = self.settings.waitkey
 
-        self.image_width = 1000
-        self.image_height = 350
+        self.image_width = 5
+        self.image_height = 5
 
         # 初始化时创建并显示 self.image
         self.pixmap_item = None
@@ -37,7 +39,7 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
         # 设置定时器以更新 QImage
         self.timer_image = QTimer()
         self.timer_image.timeout.connect(self.update_image)
-        self.timer_image.start(self.waitkey // 60)  # 与视频显示帧率保持一致
+        self.timer_image.start(self.waitkey // 30)  # 与视频显示帧率保持一致
 
         self.ADBshow = False
         # 更新ADB画面部分 结束
@@ -97,6 +99,10 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
         self.pushButton_ADBshow.clicked.connect(self.ADBshow_state)
         self.pushButton_lighting_on.clicked.connect(self.toggle_lighting)
 
+    def update_image_size(self, new_width, new_height):
+        self.image_width = new_width
+        self.image_height = new_height
+
     def toggle_lighting(self):
         if self.pushButton_lighting_on.text() == 'Lighting ON':
             self.init_image()
@@ -114,7 +120,7 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
         self.graphicsView.setScene(scene)
 
         self.image = QImage(self.image_width, self.image_height, QImage.Format.Format_ARGB32)
-        self.image.fill(QColor(255, 255, 255, 128))
+        self.image.fill(QColor(255, 0, 255, 128))
 
         pixmap = QPixmap.fromImage(self.image)
         self.pixmap_item = QGraphicsPixmapItem(pixmap)
@@ -122,6 +128,11 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
 
         self.graphicsView.viewport().setAutoFillBackground(False)
         self.graphicsView.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+
+        # 假设 'self.image' 是您的 QImage 对象
+        width = self.image.width()
+        height = self.image.height()
+        print("QImage dimensions: Width =", width, "Height =", height)
 
     def ADBshow_state(self):
         if self.pushButton_ADBshow.text() == 'ADB ON':
@@ -144,11 +155,39 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
 
         painter = QPainter(self.image)  # 将 QPainter 的实例化移到循环外
         painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Clear)
+
+        # for object_info in self.object_info_list:
+        #
+        #     x = round(object_info['x'], 1)
+        #     y = round(object_info['y'], 1)
+        #     width = round(object_info['width'], 1)
+        #     height = round(object_info['height'], 1)
+        #
+        #     x = x-1/2*width
+        #     y = y-1/2*height
+
         for message in self.can_messages:
             x, y, width, height = message
+            x = x-1/2*width
+            y = y-1/2*height
+
+            # 创建一个 QRectF 对象（使用浮点数坐标）
+            # QRectF(left: float, top: float, width: float, height: float)
+            rect = QRectF(x, y, width, height)
+            # print('in update_image', x, y, width, height, end="\n")
+
+            # 设置画刷颜色
+            color = QColor(255, 255, 255, 128)
+            painter.setBrush(color)
+
+            # 设置无边框
+            painter.setPen(QPen(Qt.PenStyle.NoPen))
 
             # 在 QImage 上绘制矩形
-            painter.fillRect(x, y, width, height, QColor(255, 255, 255, 128))
+            painter.drawRect(rect)
+
+            if not self.ADBshow:
+                return
 
         painter.end()  # 将 QPainter 的结束操作移到循环外
 
@@ -213,7 +252,11 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
                 return
 
             height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            preprocessed_frame = preprocess_frame(frame, height, self.settings)
+            preprocessed_frame, new_width, new_height = preprocess_frame(frame, height, self.settings)
+            self.new_width = new_width
+            self.new_height = new_height
+            self.update_image_size(new_width, new_height)
+
             detection_frame = preprocessed_frame.copy()
 
             # detection_frame = self.executor.submit(process_frame, detection_frame, self.model).result()  # 使用线程池处理帧
@@ -253,6 +296,7 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
 
             self.label_ADBexchange.setPixmap(pixmap_raw)
             self.label_ADBexchange.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
         else:
             self.label_ADBexchange.clear()
 
@@ -262,11 +306,11 @@ class MainWindow(QMainWindow, Ui_MainWindow, Settings, CANCommunication):
         for object_info in object_info_list:
             can_id = self.can_communication.device_id  # 从 spinBox 控件获取 CAN ID
             data = [
-                min(max(object_info['category'], 0), 255),
-                min(max(int(object_info['x'] * 255 / self.image_width), 0), 255),
-                min(max(int(object_info['y'] * 255 / self.image_height), 0), 255),
-                min(max(int(object_info['width'] * 255 / self.image_width), 0), 255),
-                min(max(int(object_info['height'] * 255 / self.image_height), 0), 255)
+                    min(max(object_info['category'], 0), 255),
+                    min(max(int(object_info['x'] * 255 / self.image_width), 0), 255),
+                    min(max(int(object_info['y'] * 102 / self.image_height), 0), 102),
+                    min(max(int(object_info['width'] * 255 / self.image_width), 0), 255),
+                    min(max(int(object_info['height'] * 102 / self.image_height), 0), 102)
             ]
 
             can_frame = (can_id, data)

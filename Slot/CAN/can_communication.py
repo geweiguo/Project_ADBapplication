@@ -1,9 +1,6 @@
-import time
-from PyQt6.QtCore import QObject, pyqtSignal
 import can
-from PyQt6.QtWidgets import QTextEdit
 import threading
-from PyQt6.QtCore import QThread, QTimer, pyqtSignal
+from PyQt6.QtCore import QThread, QTimer
 from can.interfaces.virtual import VirtualBus
 from queue import Queue
 
@@ -62,6 +59,9 @@ class CANCommunication:
         self.textEdit_CANmessage = None
         self.textEdit_CANmessage_receive = None
         self.connected = False
+
+        self.new_width = 0
+        self.new_height = 0
 
         self.can_type = "虚拟CAN"
         self.bitrate = 1000000
@@ -189,7 +189,6 @@ class CANCommunication:
         else:
             self.stop_send_can()
 
-    # 修改部分
     def send_can_data(self):
         if self.sending_data and self.detect_on:
             try:
@@ -199,9 +198,6 @@ class CANCommunication:
             except Exception as e:
                 self.textEdit_CANmessage.append(f"发送过程中出现错误: {str(e)}")
                 self.stop_send_can()
-
-    # 新增部分
-    import can
 
     def send_can_frame(self, can_frame):
         if self.bus1 is not None:
@@ -251,7 +247,7 @@ class CANCommunication:
             return None
 
         while self.receive_data:
-            msg = self.bus2.recv(0.1)  # 设置接收超时时间为 0
+            msg = self.bus2.recv(0.01)  # 设置接收超时时间为 0
             if msg is not None:
                 self.listener2.on_message_received(msg)
 
@@ -273,11 +269,12 @@ class CANCommunication:
             width = int.from_bytes(data[3:4], 'big')
             height = int.from_bytes(data[4:5], 'big')
 
-            x = int(x / 255 * 1000-5)
-            y = int(y / 255 * 350-35)
-            width = int(width / 255 * 1000+10)
-            height = int(height / 255 * 350+10)
+            x = round(x / 255 * self.new_width, 1)
+            y = round(y / 102 * self.new_height, 1)
+            width = round(width / 255 * self.new_width, 1)
+            height = round(height / 102 * self.new_height, 1)
 
+            # print('in receive ', x, y, width, height, end="\n")
             self.can_messages.append((x, y, width, height))  # 将消息添加到列表中
 
     def set_text_edit_can_message(self, text_edit):

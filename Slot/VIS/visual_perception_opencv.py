@@ -93,7 +93,7 @@ def preprocess_frame(frame, height, settings):
     new_height = int(frame.shape[0] * scale_ratio)
     frame = cv2.resize(frame, (new_width, new_height), interpolation=cv2.INTER_AREA)
 
-    return frame
+    return frame, new_width, new_height
 
 # 5. 运行目标检测
 def process_frame(frame, model):
@@ -109,7 +109,7 @@ def process_frame(frame, model):
 
 
 # 6. 后处理
-def draw_bboxes(img, results, conf_threshold=0.1):
+def draw_bboxes(img, results, conf_threshold=0.4):
     """
     在输入的图像上绘制检测到的边界框，并返回物体信息列表。
     :param img: 输入的图像
@@ -119,7 +119,7 @@ def draw_bboxes(img, results, conf_threshold=0.1):
     """
     object_info_list = []
     for *box, conf, cls in results.xyxy[0]:
-        if conf >= conf_threshold and int(cls) in [0, 1]:  # 只绘制人和车两个类别的检测结果，且置信度大于等于阈值
+        if conf >= conf_threshold and int(cls) in [0, 2]:  # 只绘制人和车两个类别的检测结果，且置信度大于等于阈值
             label = f"{results.names[int(cls)]} {conf:.2f}"
             x1, y1, x2, y2 = map(int, box)
             img = cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 2)
@@ -132,6 +132,7 @@ def draw_bboxes(img, results, conf_threshold=0.1):
                 'width': x2 - x1,
                 'height': y2 - y1
             }
+
             object_info_list.append(object_info)
 
     return img, object_info_list

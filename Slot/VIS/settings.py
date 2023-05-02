@@ -1,7 +1,4 @@
 from PyQt6.QtWidgets import QFileDialog
-import threading
-from concurrent.futures import ThreadPoolExecutor
-import subprocess as sp
 
 
 class Settings:
