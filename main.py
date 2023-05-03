@@ -8,7 +8,6 @@ from PyQt6.QtCore import QTimer, Qt
 from PyQt6.QtGui import QColor, QBrush, QImage, QPixmap, QPainter
 from PyQt6.QtCore import QRectF
 from PyQt6.QtGui import QPen
-from PyQt5 import QtCore
 
 from UI.Demo import Ui_MainWindow
 from Slot.VIS.settings import Settings
