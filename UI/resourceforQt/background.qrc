@@ -5,4 +5,8 @@
   <qresource prefix="logoico">
     <file>logo.PNG</file>
   </qresource>
+  <qresource prefix="/back">
+    <file>background_ADB.JPG</file>
+  </qresource>
 </RCC>
+
